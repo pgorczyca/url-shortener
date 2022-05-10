@@ -33,11 +33,11 @@ func (r *RedisUrlRepository) GetByShort(ctx context.Context, short string) (mode
 	if err == redis.Nil {
 		return r.repo.GetByShort(ctx, short)
 	}
-	var u model.Url
 	bytes, err := jsonUrl.Bytes()
 	if err != nil {
 		return model.Url{}, err
 	}
+	var u model.Url
 	json.Unmarshal(bytes, &u)
 	return u, nil
 }

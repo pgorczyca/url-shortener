@@ -1,4 +1,4 @@
-package pkg
+package app
 
 func Base62Encode(deci int) string {
 	s := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"

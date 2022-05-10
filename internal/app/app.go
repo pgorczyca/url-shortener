@@ -2,10 +2,10 @@ package app
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
-	"github.com/pgorczyca/url-shortener/internal/app/repository"
+	"github.com/pgorczyca/url-shortener/internal/app/handler"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -30,15 +30,19 @@ func NewApp() (*App, error) {
 }
 
 func (a *App) Run() {
-	mongoRepository := repository.NewMongo(a.mongoClient)
-	redisRepository := repository.NewRedis(a.redisClient, mongoRepository)
+	// mongoRepository := repository.NewMongo(a.mongoClient)
+	// redisRepository := repository.NewRedis(a.redisClient, mongoRepository)
 
-	url, esrr := redisRepository.GetByShort(context.TODO(), "ASt")
-	if esrr != nil {
-		fmt.Println(esrr)
-	} else {
-		fmt.Println(url)
-	}
+	router := gin.Default()
+	router.GET("/healthz", handler.Healthz)
+	router.POST("/url", handler.CreateUrl)
+	router.Run()
+	// url, esrr := redisRepository.GetByShort(context.TODO(), "ASt")
+	// if esrr != nil {
+	// 	fmt.Println(esrr)
+	// } else {
+	// 	fmt.Println(url)
+	// }
 
 	// url1 := model.Url{
 	// 	Long:      "https://www.mongodb.com/docs/drivers/go/current/fundamentals/crud/write-operations/insert/",
