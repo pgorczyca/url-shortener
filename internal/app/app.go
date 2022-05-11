@@ -6,13 +6,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"github.com/pgorczyca/url-shortener/internal/app/handler"
+	"github.com/pgorczyca/url-shortener/internal/app/repository"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type App struct {
-	redisClient *redis.Client
-	mongoClient *mongo.Client
+	redisClient   *redis.Client
+	mongoClient   *mongo.Client
+	urlRepository repository.UrlRepository
 }
 
 func NewApp() (*App, error) {
@@ -25,17 +27,21 @@ func NewApp() (*App, error) {
 		return nil, err
 	}
 	redisClient := redis.NewClient(opt)
-	return &App{redisClient: redisClient, mongoClient: mongoClient}, nil
 
+	mongoRepository := repository.NewMongo(mongoClient)
+	redisRepository := repository.NewRedis(redisClient, mongoRepository)
+	return &App{
+		redisClient:   redisClient,
+		mongoClient:   mongoClient,
+		urlRepository: redisRepository,
+	}, nil
 }
 
 func (a *App) Run() {
-	// mongoRepository := repository.NewMongo(a.mongoClient)
-	// redisRepository := repository.NewRedis(a.redisClient, mongoRepository)
 
 	router := gin.Default()
 	router.GET("/healthz", handler.Healthz)
-	router.POST("/url", handler.CreateUrl)
+	router.POST("/url", handler.CreateUrl(a.urlRepository))
 	router.Run()
 	// url, esrr := redisRepository.GetByShort(context.TODO(), "ASt")
 	// if esrr != nil {
@@ -44,13 +50,6 @@ func (a *App) Run() {
 	// 	fmt.Println(url)
 	// }
 
-	// url1 := model.Url{
-	// 	Long:      "https://www.mongodb.com/docs/drivers/go/current/fundamentals/crud/write-operations/insert/",
-	// 	Short:     "ASt",
-	// 	ExpiredAt: time.Now().Add(time.Hour * 6),
-	// 	CreatedAt: time.Now(),
-	// }
-	// redisRepository.Add(context.TODO(), url1)
 	defer a.mongoClient.Disconnect(context.TODO())
 	defer a.redisClient.Close()
 }
