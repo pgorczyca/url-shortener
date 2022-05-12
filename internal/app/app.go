@@ -38,18 +38,20 @@ func NewApp() (*App, error) {
 }
 
 func (a *App) Run() {
+	defer a.mongoClient.Disconnect(context.TODO())
+	defer a.redisClient.Close()
 
 	router := gin.Default()
 	router.GET("/healthz", handler.Healthz)
-	router.POST("/url", handler.CreateUrl(a.urlRepository))
+	router.POST("/url", a.handleGinRequest(handler.CreateUrl))
+	router.GET("/url/:short", a.handleGinRequest(handler.GetUrl))
 	router.Run()
-	// url, esrr := redisRepository.GetByShort(context.TODO(), "ASt")
-	// if esrr != nil {
-	// 	fmt.Println(esrr)
-	// } else {
-	// 	fmt.Println(url)
-	// }
+}
 
-	defer a.mongoClient.Disconnect(context.TODO())
-	defer a.redisClient.Close()
+type requestHandlerFunc func(c *gin.Context, repo repository.UrlRepository)
+
+func (a *App) handleGinRequest(handler requestHandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		handler(c, a.urlRepository)
+	}
 }
