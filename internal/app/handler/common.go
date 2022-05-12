@@ -15,7 +15,7 @@ type ValidationError struct {
 
 var valid = validator.New()
 
-func validate(r apphttp.CreateUrlRequest) ([]*ValidationError, error) {
+func validateCreate(r apphttp.CreateUrlRequest) ([]*ValidationError, error) {
 	var errs []*ValidationError
 	err := valid.Struct(r)
 	if err == nil {
