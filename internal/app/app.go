@@ -2,13 +2,14 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
-	"github.com/pgorczyca/url-shortener/internal/app/counter"
 	"github.com/pgorczyca/url-shortener/internal/app/repository"
+	"github.com/pgorczyca/url-shortener/internal/app/shortener"
 	etcd "go.etcd.io/etcd/client/v3"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -19,8 +20,8 @@ type App struct {
 	mongoClient     *mongo.Client
 	urlRepository   repository.UrlRepository
 	etcdClient      *etcd.Client
-	counterProvider counter.RangeProvider
-	counterManager  *counter.ShortGenerator
+	counterProvider shortener.RangeProvider
+	counterManager  *shortener.ShortGenerator
 }
 
 func NewApp() (*App, error) {
@@ -41,9 +42,9 @@ func NewApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	counterProvider := counter.NewEtcdProvider(etcdClient)
+	counterProvider := shortener.NewEtcdProvider(etcdClient)
 
-	counterManager, _ := counter.NewCounterManager(counterProvider)
+	counterManager, _ := shortener.NewCounterManager(counterProvider)
 
 	return &App{
 		redisClient:     redisClient,
@@ -59,15 +60,13 @@ func (a *App) Run() {
 	defer a.mongoClient.Disconnect(context.TODO())
 	defer a.redisClient.Close()
 	defer a.etcdClient.Close()
-	cm := a.counterManager
-
 	var wg sync.WaitGroup
 
 	for i := 1; i <= 100; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			cm.GetShort()
+			fmt.Println(a.counterManager.GetShort())
 		}()
 	}
 	wg.Wait()

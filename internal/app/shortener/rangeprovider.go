@@ -1,4 +1,4 @@
-package counter
+package shortener
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
-const increment uint64 = 5
+const increment uint64 = 100
 
 type RangeProvider interface {
 	GetRange() (*counterRange, error)
@@ -45,8 +45,8 @@ func (e *EtcdRangeProvider) GetRange() (*counterRange, error) {
 	if err := mutex.Unlock(ctx); err != nil {
 		fmt.Println(err)
 	}
-
-	return &counterRange{start: uint64(counterStart), end: uint64(counterEnd)}, nil
+	counterTreshold := uint64(counterStart) + uint64((float64(increment) * 0.9))
+	return &counterRange{start: uint64(counterStart), end: uint64(counterEnd), treshold: counterTreshold}, nil
 }
 
 func NewEtcdProvider(client *etcd.Client) *EtcdRangeProvider {

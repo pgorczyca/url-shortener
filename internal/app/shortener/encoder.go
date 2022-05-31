@@ -1,4 +1,4 @@
-package counter
+package shortener
 
 func Base62Encode(deci uint64) string {
 	s := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
