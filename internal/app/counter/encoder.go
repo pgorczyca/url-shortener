@@ -1,6 +1,6 @@
-package app
+package counter
 
-func Base62Encode(deci int) string {
+func Base62Encode(deci uint64) string {
 	s := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	hashStr := ""
 	for deci > 0 {

@@ -2,12 +2,12 @@ package app
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"github.com/pgorczyca/url-shortener/internal/app/counter"
-	"github.com/pgorczyca/url-shortener/internal/app/handler"
 	"github.com/pgorczyca/url-shortener/internal/app/repository"
 	etcd "go.etcd.io/etcd/client/v3"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,7 +19,8 @@ type App struct {
 	mongoClient     *mongo.Client
 	urlRepository   repository.UrlRepository
 	etcdClient      *etcd.Client
-	counterProvider counter.Provider
+	counterProvider counter.RangeProvider
+	counterManager  *counter.ShortGenerator
 }
 
 func NewApp() (*App, error) {
@@ -41,12 +42,16 @@ func NewApp() (*App, error) {
 		return nil, err
 	}
 	counterProvider := counter.NewEtcdProvider(etcdClient)
+
+	counterManager, _ := counter.NewCounterManager(counterProvider)
+
 	return &App{
 		redisClient:     redisClient,
 		mongoClient:     mongoClient,
 		urlRepository:   redisRepository,
 		etcdClient:      etcdClient,
 		counterProvider: counterProvider,
+		counterManager:  counterManager,
 	}, nil
 }
 
@@ -54,13 +59,23 @@ func (a *App) Run() {
 	defer a.mongoClient.Disconnect(context.TODO())
 	defer a.redisClient.Close()
 	defer a.etcdClient.Close()
+	cm := a.counterManager
 
-	a.counterProvider.GetCounter()
-	router := gin.Default()
-	router.GET("/healthz", handler.Healthz)
-	router.POST("/url", a.handleGinRequest(handler.CreateUrl))
-	router.GET("/url/:short", a.handleGinRequest(handler.GetUrl))
-	router.Run()
+	var wg sync.WaitGroup
+
+	for i := 1; i <= 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			cm.GetShort()
+		}()
+	}
+	wg.Wait()
+	// router := gin.Default()
+	// router.GET("/healthz", handler.Healthz)
+	// router.POST("/url", a.handleGinRequest(handler.CreateUrl))
+	// router.GET("/url/:short", a.handleGinRequest(handler.GetUrl))
+	// router.Run()
 
 }
 
