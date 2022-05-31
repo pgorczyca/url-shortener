@@ -1,6 +1,6 @@
 package shortener
 
-func Base62Encode(deci uint64) string {
+func base62Encode(deci uint64) string {
 	s := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	hashStr := ""
 	for deci > 0 {

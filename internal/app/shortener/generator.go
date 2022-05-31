@@ -27,8 +27,11 @@ func NewCounterManager(provider RangeProvider) (*ShortGenerator, error) {
 }
 
 func (sg *ShortGenerator) GetShort() (string, error) {
-	next, _ := sg.getNext()
-	return Base62Encode(next), nil
+	next, err := sg.getNext()
+	if err != nil {
+		return "", err
+	}
+	return base62Encode(next), nil
 }
 
 func (sg *ShortGenerator) getNext() (uint64, error) {

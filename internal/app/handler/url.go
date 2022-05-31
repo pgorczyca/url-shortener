@@ -10,11 +10,12 @@ import (
 	apphttp "github.com/pgorczyca/url-shortener/internal/app/http"
 	"github.com/pgorczyca/url-shortener/internal/app/model"
 	"github.com/pgorczyca/url-shortener/internal/app/repository"
+	"github.com/pgorczyca/url-shortener/internal/app/shortener"
 
 	"github.com/gin-gonic/gin"
 )
 
-func CreateUrl(c *gin.Context, repo repository.UrlRepository) {
+func CreateUrl(c *gin.Context, repo repository.UrlRepository, sg *shortener.ShortGenerator) {
 	jsonUrl, _ := ioutil.ReadAll(c.Request.Body)
 	var req apphttp.CreateUrlRequest
 	json.Unmarshal(jsonUrl, &req)
@@ -26,16 +27,22 @@ func CreateUrl(c *gin.Context, repo repository.UrlRepository) {
 
 		return
 	}
-
+	short, err := sg.GetShort()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"errors": err,
+		})
+		return
+	}
 	url := model.Url{
 		Long:      "https://www.mongodb.com/docs/drivers/go/current/fundamentals/crud/write-operations/insert/",
-		Short:     "ASt",
+		Short:     short,
 		ExpiredAt: time.Now().Add(time.Hour * 6),
 		CreatedAt: time.Now(),
 	}
 	repo.Add(context.TODO(), url)
 
-	res := apphttp.UrlResponse{Long: req.Long, Short: "34s", CreatedAt: time.Now(), ExpiredAt: time.Now().Add(time.Hour * 6)}
+	res := apphttp.UrlResponse{Long: req.Long, Short: short, CreatedAt: time.Now(), ExpiredAt: time.Now().Add(time.Hour * 6)}
 	c.JSON(http.StatusCreated, res)
 
 }

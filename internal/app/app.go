@@ -2,12 +2,11 @@ package app
 
 import (
 	"context"
-	"fmt"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
+	"github.com/pgorczyca/url-shortener/internal/app/handler"
 	"github.com/pgorczyca/url-shortener/internal/app/repository"
 	"github.com/pgorczyca/url-shortener/internal/app/shortener"
 	etcd "go.etcd.io/etcd/client/v3"
@@ -16,12 +15,12 @@ import (
 )
 
 type App struct {
-	redisClient     *redis.Client
-	mongoClient     *mongo.Client
-	urlRepository   repository.UrlRepository
-	etcdClient      *etcd.Client
-	counterProvider shortener.RangeProvider
-	counterManager  *shortener.ShortGenerator
+	redisClient    *redis.Client
+	mongoClient    *mongo.Client
+	urlRepository  repository.UrlRepository
+	etcdClient     *etcd.Client
+	rangeProvider  shortener.RangeProvider
+	shortGenerator *shortener.ShortGenerator
 }
 
 func NewApp() (*App, error) {
@@ -42,17 +41,17 @@ func NewApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	counterProvider := shortener.NewEtcdProvider(etcdClient)
+	rangeProvider := shortener.NewEtcdProvider(etcdClient)
 
-	counterManager, _ := shortener.NewCounterManager(counterProvider)
+	shortGenerator, _ := shortener.NewCounterManager(rangeProvider)
 
 	return &App{
-		redisClient:     redisClient,
-		mongoClient:     mongoClient,
-		urlRepository:   redisRepository,
-		etcdClient:      etcdClient,
-		counterProvider: counterProvider,
-		counterManager:  counterManager,
+		redisClient:    redisClient,
+		mongoClient:    mongoClient,
+		urlRepository:  redisRepository,
+		etcdClient:     etcdClient,
+		rangeProvider:  rangeProvider,
+		shortGenerator: shortGenerator,
 	}, nil
 }
 
@@ -60,27 +59,22 @@ func (a *App) Run() {
 	defer a.mongoClient.Disconnect(context.TODO())
 	defer a.redisClient.Close()
 	defer a.etcdClient.Close()
-	var wg sync.WaitGroup
 
-	for i := 1; i <= 100; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			fmt.Println(a.counterManager.GetShort())
-		}()
-	}
-	wg.Wait()
-	// router := gin.Default()
-	// router.GET("/healthz", handler.Healthz)
-	// router.POST("/url", a.handleGinRequest(handler.CreateUrl))
-	// router.GET("/url/:short", a.handleGinRequest(handler.GetUrl))
-	// router.Run()
+	router := gin.Default()
+	router.GET("/healthz", handler.Healthz)
+	router.POST("/url", a.handleCreateUrlRequest(handler.CreateUrl))
+	router.GET("/url/:short", a.handleGetUrlRequest(handler.GetUrl))
+	router.Run()
 
 }
 
-type requestHandlerFunc func(c *gin.Context, repo repository.UrlRepository)
+func (a *App) handleCreateUrlRequest(handler func(c *gin.Context, repo repository.UrlRepository, sg *shortener.ShortGenerator)) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		handler(c, a.urlRepository, a.shortGenerator)
+	}
+}
 
-func (a *App) handleGinRequest(handler requestHandlerFunc) gin.HandlerFunc {
+func (a *App) handleGetUrlRequest(handler func(c *gin.Context, repo repository.UrlRepository)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		handler(c, a.urlRepository)
 	}
