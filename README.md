@@ -1,7 +1,7 @@
 # url-shortener
 TODO
-dockerfile 
-docker compose
 project architecture image
+project manual
+refactor range provider initialize
 context
 tests

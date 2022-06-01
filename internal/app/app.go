@@ -50,8 +50,9 @@ func NewApp() (*App, error) {
 		return nil, err
 	}
 	rangeProvider := shortener.NewEtcdProvider(etcdClient)
+	rangeProvider.Initialize()
 
-	shortGenerator, _ := shortener.NewCounterManager(rangeProvider)
+	shortGenerator, _ := shortener.NewShortGenerator(rangeProvider)
 
 	return &App{
 		redisClient:    redisClient,
@@ -63,7 +64,7 @@ func NewApp() (*App, error) {
 	}, nil
 }
 
-func (a *App) Run() {
+func (a *App) ServeHTTP() {
 	utils.Logger.Info("Running application")
 	defer utils.Logger.Info("Stopping application")
 

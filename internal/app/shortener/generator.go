@@ -21,7 +21,7 @@ type counterRange struct {
 	treshold uint64
 }
 
-func NewCounterManager(provider RangeProvider) (*ShortGenerator, error) {
+func NewShortGenerator(provider RangeProvider) (*ShortGenerator, error) {
 	newRange, err := provider.GetRange()
 	if err != nil {
 		utils.Logger.Error("Not able to get new range.", zap.Error(err))
