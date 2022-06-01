@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -64,6 +66,8 @@ func NewApp() (*App, error) {
 func (a *App) Run() {
 	utils.Logger.Info("Running application")
 	defer utils.Logger.Info("Stopping application")
+
+	fmt.Println(os.Getenv("ENVIRONMENT"))
 
 	defer a.mongoClient.Disconnect(context.TODO())
 	defer a.redisClient.Close()
