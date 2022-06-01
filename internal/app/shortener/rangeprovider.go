@@ -12,6 +12,7 @@ import (
 )
 
 const increment uint64 = 100
+const treshold float64 = 100
 
 type RangeProvider interface {
 	GetRange() (*counterRange, error)
@@ -50,7 +51,7 @@ func (e *EtcdRangeProvider) GetRange() (*counterRange, error) {
 		utils.Logger.Error("Not able to unlock mutex.", zap.Error(err))
 		fmt.Println(err)
 	}
-	counterTreshold := uint64(counterStart) + uint64((float64(increment) * 0.9))
+	counterTreshold := uint64(counterStart) + uint64((float64(increment) * treshold))
 	return &counterRange{start: uint64(counterStart), end: uint64(counterEnd), treshold: counterTreshold}, nil
 }
 

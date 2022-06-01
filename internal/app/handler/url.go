@@ -17,6 +17,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const expirationDuration = time.Hour * 8765 // links are valid for 1 year
+
 func CreateUrl(c *gin.Context, repo repository.UrlRepository, sg *shortener.ShortGenerator) {
 	jsonUrl, _ := ioutil.ReadAll(c.Request.Body)
 	var req apphttp.CreateUrlRequest
@@ -38,7 +40,7 @@ func CreateUrl(c *gin.Context, repo repository.UrlRepository, sg *shortener.Shor
 	url := model.Url{
 		Long:      req.Long,
 		Short:     short,
-		ExpiredAt: time.Now().Add(time.Hour * 8765), // links are valid for 1 year
+		ExpiredAt: time.Now().Add(expirationDuration),
 		CreatedAt: time.Now(),
 	}
 	err = repo.Add(context.TODO(), url)
