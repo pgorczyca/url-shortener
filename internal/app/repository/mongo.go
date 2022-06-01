@@ -12,17 +12,16 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	mongoDB        = "mongoDB"
-	mongoColletion = "urls"
-)
+const mongoColletion = "urls"
+
+var c = utils.GetConfig()
 
 type MongoUrlRepository struct {
 	collection *mongo.Collection
 }
 
 func NewMongo(client *mongo.Client) *MongoUrlRepository {
-	return &MongoUrlRepository{collection: client.Database(mongoDB).Collection(mongoColletion)}
+	return &MongoUrlRepository{collection: client.Database(c.MongoDB).Collection(mongoColletion)}
 }
 func (r *MongoUrlRepository) Add(ctx context.Context, u model.Url) error {
 

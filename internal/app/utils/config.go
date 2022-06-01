@@ -6,7 +6,6 @@ import (
 )
 
 type AppConfig struct {
-	Environment      string   `mapstructure:"ENVIRONMENT"`
 	MongoURI         string   `mapstructure:"MONGO_URI"`
 	MongoDB          string   `mapstructure:"MONGO_DB"`
 	RedisURL         string   `mapstructure:"REDIS_URL"`
@@ -15,11 +14,15 @@ type AppConfig struct {
 	CounterTreshold  float64  `mapstructure:"COUNTER_TRESHOLD"`
 }
 
-func LoadConfig() (AppConfig, error) {
+var config AppConfig
+
+func GetConfig() *AppConfig {
+	return &config
+}
+
+func init() {
 	vp := viper.New()
 	vp.AutomaticEnv()
-
-	vp.SetDefault("ENVIRONMENT", "development")
 	vp.SetDefault("MONGO_URI", "mongodb://localhost:27017")
 	vp.SetDefault("MONGO_DB", "mongoDB")
 	vp.SetDefault("REDIS_URL", "redis://localhost:6379")
@@ -27,11 +30,8 @@ func LoadConfig() (AppConfig, error) {
 	vp.SetDefault("COUNTER_INCREMENT", "100")
 	vp.SetDefault("COUNTER_TRESHOLD", "0.9")
 
-	var config AppConfig
 	if err := vp.Unmarshal(&config); err != nil {
 		Logger.Info("Not able to unmarshall config.", zap.Error(err))
-		return AppConfig{}, err
-	}
 
-	return config, nil
+	}
 }

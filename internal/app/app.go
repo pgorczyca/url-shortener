@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,19 +25,16 @@ type App struct {
 	shortGenerator *shortener.ShortGenerator
 }
 
+var config = utils.GetConfig()
+
 func NewApp() (*App, error) {
 	utils.InitializeLogger()
-	config, err := utils.LoadConfig()
-	if err != nil {
-		utils.Logger.Fatal("Not able to load new config.", zap.Error(err))
-	}
-	fmt.Println(config)
-	mongoClient, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost:27017"))
+	mongoClient, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(config.MongoURI))
 	if err != nil {
 		utils.Logger.Error("Not able to connect to mongo.", zap.Error(err))
 		return nil, err
 	}
-	opt, err := redis.ParseURL("redis://localhost:6379")
+	opt, err := redis.ParseURL(config.RedisURL)
 	if err != nil {
 		utils.Logger.Error("Not able to connect to redis.", zap.Error(err))
 		return nil, err
@@ -48,7 +44,7 @@ func NewApp() (*App, error) {
 	mongoRepository := repository.NewMongo(mongoClient)
 	redisRepository := repository.NewRedis(redisClient, mongoRepository)
 
-	etcdClient, err := etcd.New(etcd.Config{Endpoints: []string{"localhost:2379"}, DialTimeout: 5 * time.Second})
+	etcdClient, err := etcd.New(etcd.Config{Endpoints: config.EtcdEndpoints, DialTimeout: 5 * time.Second})
 	if err != nil {
 		utils.Logger.Error("Not able to connect to etcd.", zap.Error(err))
 		return nil, err

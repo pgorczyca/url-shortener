@@ -11,8 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const increment uint64 = 100
-const treshold float64 = 100
+var c = utils.GetConfig()
 
 type RangeProvider interface {
 	GetRange() (*counterRange, error)
@@ -43,7 +42,7 @@ func (e *EtcdRangeProvider) GetRange() (*counterRange, error) {
 		return nil, err
 	}
 	counterStart, _ := strconv.Atoi(string(gResp.Kvs[0].Value))
-	counterEnd := counterStart + int(increment)
+	counterEnd := counterStart + int(c.CounterIncrement)
 
 	kvc.Put(ctx, "counter", strconv.Itoa(counterEnd))
 
@@ -51,7 +50,7 @@ func (e *EtcdRangeProvider) GetRange() (*counterRange, error) {
 		utils.Logger.Error("Not able to unlock mutex.", zap.Error(err))
 		fmt.Println(err)
 	}
-	counterTreshold := uint64(counterStart) + uint64((float64(increment) * treshold))
+	counterTreshold := uint64(counterStart) + uint64((float64(c.CounterIncrement) * c.CounterTreshold))
 	return &counterRange{start: uint64(counterStart), end: uint64(counterEnd), treshold: counterTreshold}, nil
 }
 
