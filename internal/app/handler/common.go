@@ -2,7 +2,9 @@ package handler
 
 import (
 	"errors"
+	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	apphttp "github.com/pgorczyca/url-shortener/internal/app/http"
 )
@@ -28,4 +30,10 @@ func validateCreate(r apphttp.CreateUrlRequest) ([]*ValidationError, error) {
 	}
 
 	return errs, errors.New("validation error")
+}
+
+func internalServerErrorResponse(c *gin.Context) {
+	c.JSON(http.StatusInternalServerError, gin.H{
+		"error": "Internal server error",
+	})
 }

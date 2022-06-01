@@ -11,6 +11,8 @@ import (
 	"github.com/pgorczyca/url-shortener/internal/app/model"
 	"github.com/pgorczyca/url-shortener/internal/app/repository"
 	"github.com/pgorczyca/url-shortener/internal/app/shortener"
+	"github.com/pgorczyca/url-shortener/internal/app/utils"
+	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,27 +26,30 @@ func CreateUrl(c *gin.Context, repo repository.UrlRepository, sg *shortener.Shor
 		c.JSON(http.StatusBadRequest, gin.H{
 			"errors": validationerr,
 		})
-
 		return
+
 	}
 	short, err := sg.GetShort()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"errors": err,
-		})
+		internalServerErrorResponse(c)
+		utils.Logger.Error("Not able to generate new short", zap.Error(err))
 		return
 	}
 	url := model.Url{
-		Long:      "https://www.mongodb.com/docs/drivers/go/current/fundamentals/crud/write-operations/insert/",
+		Long:      req.Long,
 		Short:     short,
-		ExpiredAt: time.Now().Add(time.Hour * 6),
+		ExpiredAt: time.Now().Add(time.Hour * 8765), // links are valid for 1 year
 		CreatedAt: time.Now(),
 	}
-	repo.Add(context.TODO(), url)
+	err = repo.Add(context.TODO(), url)
+	if err != nil {
+		internalServerErrorResponse(c)
+		utils.Logger.Error("Not able to insert to repository.", zap.Error(err))
+		return
+	}
 
-	res := apphttp.UrlResponse{Long: req.Long, Short: short, CreatedAt: time.Now(), ExpiredAt: time.Now().Add(time.Hour * 6)}
+	res := apphttp.UrlResponse{Long: req.Long, Short: short, CreatedAt: url.CreatedAt, ExpiredAt: url.ExpiredAt}
 	c.JSON(http.StatusCreated, res)
-
 }
 
 func GetUrl(c *gin.Context, repo repository.UrlRepository) {
@@ -57,4 +62,5 @@ func GetUrl(c *gin.Context, repo repository.UrlRepository) {
 	}
 	res := apphttp.UrlResponse{Long: url.Long, Short: url.Short, CreatedAt: url.CreatedAt, ExpiredAt: url.ExpiredAt}
 	c.JSON(http.StatusOK, res)
+
 }
