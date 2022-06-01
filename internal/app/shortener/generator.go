@@ -63,6 +63,7 @@ func (sg *ShortGenerator) getNext() (uint64, error) {
 	}
 	return sg.counter, nil
 }
+
 func base62Encode(deci uint64) string {
 	s := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	hashStr := ""

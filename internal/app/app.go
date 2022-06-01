@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -29,6 +28,11 @@ type App struct {
 
 func NewApp() (*App, error) {
 	utils.InitializeLogger()
+	config, err := utils.LoadConfig()
+	if err != nil {
+		utils.Logger.Fatal("Not able to load new config.", zap.Error(err))
+	}
+	fmt.Println(config)
 	mongoClient, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		utils.Logger.Error("Not able to connect to mongo.", zap.Error(err))
@@ -66,8 +70,6 @@ func NewApp() (*App, error) {
 func (a *App) Run() {
 	utils.Logger.Info("Running application")
 	defer utils.Logger.Info("Stopping application")
-
-	fmt.Println(os.Getenv("ENVIRONMENT"))
 
 	defer a.mongoClient.Disconnect(context.TODO())
 	defer a.redisClient.Close()
