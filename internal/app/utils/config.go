@@ -12,6 +12,7 @@ type AppConfig struct {
 	EtcdEndpoints    []string `mapstructure:"ETCD_ENDPOINTS"`
 	CounterIncrement uint64   `mapstructure:"COUNTER_INCREMENT"`
 	CounterTreshold  float64  `mapstructure:"COUNTER_TRESHOLD"`
+	PrefixUrl        string   `mapstructure:"PREFIX_URL"`
 }
 
 var config AppConfig
@@ -29,6 +30,7 @@ func init() {
 	vp.SetDefault("ETCD_ENDPOINTS", "localhost:2379")
 	vp.SetDefault("COUNTER_INCREMENT", "100")
 	vp.SetDefault("COUNTER_TRESHOLD", "0.9")
+	vp.SetDefault("PREFIX_URL", "http://localhost:8080")
 
 	if err := vp.Unmarshal(&config); err != nil {
 		Logger.Info("Not able to unmarshall config.", zap.Error(err))

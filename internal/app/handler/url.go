@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	apphttp "github.com/pgorczyca/url-shortener/internal/app/http"
@@ -18,6 +19,7 @@ import (
 )
 
 const expirationDuration = time.Hour * 8765 // links are valid for 1 year
+var prefixUrl = utils.GetConfig().PrefixUrl
 
 func CreateUrl(c *gin.Context, repo repository.UrlRepository, sg *shortener.ShortGenerator) {
 	jsonUrl, _ := ioutil.ReadAll(c.Request.Body)
@@ -50,7 +52,11 @@ func CreateUrl(c *gin.Context, repo repository.UrlRepository, sg *shortener.Shor
 		return
 	}
 
-	res := apphttp.UrlResponse{Long: req.Long, Short: short, CreatedAt: url.CreatedAt, ExpiredAt: url.ExpiredAt}
+	res := apphttp.UrlResponse{Long: req.Long,
+		Short:     strings.Join([]string{prefixUrl, url.Short}, "/"),
+		CreatedAt: url.CreatedAt,
+		ExpiredAt: url.ExpiredAt,
+	}
 	c.JSON(http.StatusCreated, res)
 }
 
@@ -62,7 +68,7 @@ func GetUrl(c *gin.Context, repo repository.UrlRepository) {
 		})
 		return
 	}
-	res := apphttp.UrlResponse{Long: url.Long, Short: url.Short, CreatedAt: url.CreatedAt, ExpiredAt: url.ExpiredAt}
-	c.JSON(http.StatusOK, res)
+
+	c.Redirect(http.StatusMovedPermanently, url.Long)
 
 }

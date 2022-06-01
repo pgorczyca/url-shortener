@@ -76,7 +76,7 @@ func (a *App) Run() {
 	router := gin.New()
 	router.GET("/healthz", handler.Healthz)
 	router.POST("/url", a.handleCreateUrlRequest(handler.CreateUrl))
-	router.GET("/url/:short", a.handleGetUrlRequest(handler.GetUrl))
+	router.GET("/:short", a.handleGetUrlRequest(handler.GetUrl))
 	router.Run()
 
 }
