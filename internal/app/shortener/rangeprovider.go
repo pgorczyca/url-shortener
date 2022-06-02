@@ -37,14 +37,14 @@ func (e *EtcdRangeProvider) Initialize() error {
 		utils.Logger.Error("Not able to lock mutex.", zap.Error(err))
 	}
 
-	gResp, err := kvc.Get(ctx, "counter")
+	gResp, err := kvc.Get(ctx, "lastCounterEnd")
 	if err != nil {
-		utils.Logger.Error("Not able to get counter from etcd.", zap.Error(err))
+		utils.Logger.Error("Not able to get lastCounterEnd from etcd.", zap.Error(err))
 		return err
 	}
 
 	if len(gResp.Kvs) == 0 {
-		kvc.Put(ctx, "counter", "0")
+		kvc.Put(ctx, "lastCounterEnd", "0")
 	}
 
 	if err := mutex.Unlock(ctx); err != nil {
@@ -67,9 +67,9 @@ func (e *EtcdRangeProvider) GetRange() (*counterRange, error) {
 		utils.Logger.Error("Not able to lock mutex.", zap.Error(err))
 	}
 
-	gResp, err := kvc.Get(ctx, "counter")
+	gResp, err := kvc.Get(ctx, "lastCounterEnd")
 	if err != nil {
-		utils.Logger.Error("Not able to get counter from etcd.", zap.Error(err))
+		utils.Logger.Error("Not able to get lastCounterEnd from etcd.", zap.Error(err))
 		return nil, err
 	}
 	counterStart, err := strconv.Atoi(string(gResp.Kvs[0].Value))

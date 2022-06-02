@@ -1,0 +1,10 @@
+POST http://localhost:8081/url HTTP/1.1
+content-type: application/json
+
+{
+    "long": "https://github.com/pgorczyca/url-shortener"
+}
+
+###
+
+GET  http://localhost:8081/1 HTTP/1.1
