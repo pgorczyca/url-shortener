@@ -19,14 +19,11 @@ $ curl -X POST -H "Content-Type: application/json" \
     -d '{"long": "https://github.com/pgorczyca/url-shortener"}' \
     http://localhost:8081/url
 ```
+
 Get URL
-
 ```
-$ curl -X GET --location 'localhost:8081/1'
-
+$ curl --silent -v localhost:8081/1
 ```
 
-TODO
-refactor range provider initialize,
-context,
-tests
+# References
+https://youtu.be/JQDHz72OA3c - inspired by
